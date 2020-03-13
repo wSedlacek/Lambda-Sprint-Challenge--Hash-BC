@@ -14,7 +14,9 @@ disable()
 
 interrupt: bool = False
 
+counter: int = 0
 last_proof: int = None
+coins_mined: int = 0
 
 
 def set_interval(interval: float, runner: Callable):
@@ -25,18 +27,16 @@ def set_interval(interval: float, runner: Callable):
 
 
 def update_proof():
-    global last_proof
+    global counter, last_proof
     response = get(url=node + "/last_proof")
     current = response.json()
 
     if last_proof != current['proof']:
         last_proof = current['proof']
-        print(last_proof)
-    else:
-        print("No Update...")
+        counter = 0
 
 
-def proof_of_work():
+def mine(user_id: str):
     """
     Multi-Ouroboros of Work Algorithm
     - Find a number p' such that the last six digits of hash(p) are equal
@@ -46,15 +46,14 @@ def proof_of_work():
     - Use the same method to generate SHA-256 hashes as the examples in class
     """
 
-    start = timer()
+    global interrupt, last_proof, coins_mined, counter
 
-    print("Searching for next proof")
-    proof = 0
-    #  TODO: Your code here
-
-    print(f"Proof found: {proof} in {timer() - start}")
-
-    return proof
+    counter += 1
+    proof = counter
+    if valid_proof(last_proof, proof):
+        post_proof(user_id, proof)
+        update_proof()
+        interrupt = coins_mined >= 10
 
 
 def valid_proof(last_proof: int, proof: int):
@@ -69,6 +68,19 @@ def valid_proof(last_proof: int, proof: int):
     current_hash = hash_proof(proof)
 
     return last_hash[-6:] == current_hash[:6]
+
+
+def post_proof(user_id: str, proof: int):
+    global coins_mined
+    potential_block = {"id": user_id, "proof": proof}
+    response = post(url=node + "/mine", json=potential_block)
+    data = response.json()
+
+    if data['message'] == 'New Block Forged':
+        coins_mined += 1
+        print(f"Total coins mined: {coins_mined}")
+    else:
+        print(data['message'])
 
 
 def hash_proof(proof: int):
@@ -98,6 +110,8 @@ if __name__ == '__main__':
     # Load or create ID
     user_id = load_user()
     coins_mined = 0
-    update_freq = 1
+    update_freq = 0.05
 
     set_interval(update_freq, update_proof)
+    while not interrupt:
+        mine(user_id)
