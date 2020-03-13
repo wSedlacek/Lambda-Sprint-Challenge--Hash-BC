@@ -17,6 +17,8 @@ last_proof: int = None
 
 coins_mined: int = 0
 
+cache = {}
+
 
 def set_interval(interval: float, runner: Callable):
     global interrupt
@@ -26,15 +28,19 @@ def set_interval(interval: float, runner: Callable):
 
 
 def update_proof():
-    global counter, last_hash, last_proof
+    global counter, last_hash, last_proof, cache
     response = get(url=node + "/last_proof")
     current = response.json()
 
     if last_proof != current['proof']:
         last_proof = current['proof']
         last_hash = hash_proof(last_proof)
-        counter = 0
         print(f"Proof Change: {last_proof}")
+
+    if last_hash[-6:] in cache:
+        post_proof("wSedlacek", cache[last_hash[-6:]])
+        update_proof()
+        interrupt = coins_mined >= 100
 
 
 def mine(user_id: str):
@@ -49,25 +55,8 @@ def mine(user_id: str):
 
     global interrupt, counter, last_hash, coins_mined
 
-    counter -= 1
-    proof = counter
-    if valid_proof(last_hash, proof):
-        post_proof(user_id, proof)
-        update_proof()
-        interrupt = coins_mined >= 100
-
-
-def valid_proof(last_hash: str, proof: int):
-    """
-    Validates the Proof:  Multi-ouroborus:  Do the last six characters of
-    the hash of the last proof match the first six characters of the hash
-    of the new proof?
-
-    IE:  last_hash: ...AE9123456, new hash 123456E88...
-    """
-    current_hash = hash_proof(proof)
-
-    return last_hash[-6:] == current_hash[:6]
+    counter += 1
+    hash_proof(counter)
 
 
 def post_proof(user_id: str, proof: int):
@@ -84,9 +73,11 @@ def post_proof(user_id: str, proof: int):
 
 
 def hash_proof(proof: int):
+    global cache
     string = str(proof).encode("utf-8")
-
-    return str(sha256(string).hexdigest())
+    hashed = str(sha256(string).hexdigest())
+    cache[hashed[:6]] = proof
+    return hashed
 
 
 def load_user():
