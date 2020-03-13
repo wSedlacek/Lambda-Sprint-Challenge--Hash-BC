@@ -1,8 +1,8 @@
-import random
 
 from gc import disable
 from hashlib import sha256
 from requests import get, post
+from random import randint
 from sys import argv
 from threading import Timer
 from timeit import default_timer as timer
@@ -15,7 +15,9 @@ disable()
 interrupt: bool = False
 
 counter: int = 0
+last_hash: str = ""
 last_proof: int = None
+
 coins_mined: int = 0
 
 
@@ -27,13 +29,15 @@ def set_interval(interval: float, runner: Callable):
 
 
 def update_proof():
-    global counter, last_proof
+    global counter, last_proof, last_hash
     response = get(url=node + "/last_proof")
     current = response.json()
 
     if last_proof != current['proof']:
         last_proof = current['proof']
+        last_hash = hash_proof(last_proof)
         counter = 0
+        print(f"Proof Change: {last_proof}")
 
 
 def mine(user_id: str):
@@ -46,17 +50,17 @@ def mine(user_id: str):
     - Use the same method to generate SHA-256 hashes as the examples in class
     """
 
-    global interrupt, last_proof, coins_mined, counter
+    global interrupt, last_hash, coins_mined, counter
 
-    counter += 1
+    counter -= 1
     proof = counter
-    if valid_proof(last_proof, proof):
+    if valid_proof(last_hash, proof):
         post_proof(user_id, proof)
         update_proof()
         interrupt = coins_mined >= 10
 
 
-def valid_proof(last_proof: int, proof: int):
+def valid_proof(last_hash: str, proof: int):
     """
     Validates the Proof:  Multi-ouroborus:  Do the last six characters of
     the hash of the last proof match the first six characters of the hash
@@ -64,7 +68,6 @@ def valid_proof(last_proof: int, proof: int):
 
     IE:  last_hash: ...AE9123456, new hash 123456E88...
     """
-    last_hash = hash_proof(last_proof)
     current_hash = hash_proof(proof)
 
     return last_hash[-6:] == current_hash[:6]
@@ -109,8 +112,7 @@ if __name__ == '__main__':
 
     # Load or create ID
     user_id = load_user()
-    coins_mined = 0
-    update_freq = 0.05
+    update_freq = 0.01
 
     set_interval(update_freq, update_proof)
     while not interrupt:
