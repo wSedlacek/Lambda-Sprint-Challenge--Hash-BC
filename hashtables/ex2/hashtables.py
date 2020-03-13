@@ -26,6 +26,7 @@ def hash(string, max):
 
     return hash % max
 
+
 def hash_table_insert(hash_table, key, value):
     index = hash(key, len(hash_table.storage))
 
@@ -61,7 +62,6 @@ def hash_table_remove(hash_table, key):
             hash_table.storage[index] = current_pair.next
         else:
             last_pair.next = current_pair.next
-
 
 
 def hash_table_retrieve(hash_table, key):
