@@ -25,11 +25,32 @@ This sprint challenge is divided up into three parts: Hash tables coding, blockc
 Explain in detail the workings of a dynamic array:
 
 - What is the runtime complexity to access an array, add or remove from the front, and add or remove from the back?
+
+  - Access: O(k)
+  - Add from back: O(k) if not full, O(n) if full (to copy to new array), increasing the amount resized each time we resize brings this down to effectively O(k) as by the time we are working with really large numbers resizing won't be occurring frequently
+  - Add to front: O(n), the array must be copied over to a new block of memory to add to the front
+
 - What is the worse case scenario if you try to extend the storage size of a dynamic array?
+  - O(n) meaning you have to copy the entire array over to a new block of memory
 
 Explain how a blockchain is structured. What are the blocks, what is the chain? How is the data organized?
 
+```txt
+A block chain is a series blocks where each block contains a hash of the previous block and a proof of
+work that validate the block. Each block can contain any type of data, transactions, logs, anything real,
+ultimately what is important is how each block preferences the previous one and how each block is validate
+```
+
 Explain how proof of work functions. How does it operate. How does this protect the chain from attack. What kind of attack is possible?
+
+```txt
+Proof of work is some rule, typically relating around the hash that makes validating a block easy but
+finding a valid block difficult. In addition chains that have the most work put into them are considered to
+be the true chain. Fake blocks can be created with valid proofs of work however in order to do so an attacker
+would need not only find a valid proof for his fake block but also all blocks that come after it and do so to
+become a longer chain then what everyone in the entire world is working on. Basically they would need more
+compute power then everyone else who uses the block chain which in large communities is next to impossible.
+```
 
 ## Project Set Up
 
