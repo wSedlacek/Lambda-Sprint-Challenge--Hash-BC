@@ -4,14 +4,39 @@ from gc import disable
 from hashlib import sha256
 from requests import get, post
 from sys import argv
+from threading import Timer
 from timeit import default_timer as timer
+from typing import Callable
 from uuid import uuid4
 
 
 disable()
 
+interrupt: bool = False
 
-def proof_of_work(last_proof):
+last_proof: int = None
+
+
+def set_interval(interval: float, runner: Callable):
+    global interrupt
+    if not interrupt:
+        runner()
+        Timer(interval, set_interval, args=[interval, runner]).start()
+
+
+def update_proof():
+    global last_proof
+    response = get(url=node + "/last_proof")
+    current = response.json()
+
+    if last_proof != current['proof']:
+        last_proof = current['proof']
+        print(last_proof)
+    else:
+        print("No Update...")
+
+
+def proof_of_work():
     """
     Multi-Ouroboros of Work Algorithm
     - Find a number p' such that the last six digits of hash(p) are equal
@@ -46,7 +71,7 @@ def valid_proof(last_proof: int, proof: int):
     return last_hash[-6:] == current_hash[:6]
 
 
-def hash_proof(proof):
+def hash_proof(proof: int):
     string = str(proof).encode("utf-8")
     return str(sha256(string).hexdigest())
 
@@ -73,20 +98,6 @@ if __name__ == '__main__':
     # Load or create ID
     user_id = load_user()
     coins_mined = 0
+    update_freq = 1
 
-    while True:
-        # Get the last proof from the server
-        response = get(url=node + "/last_proof")
-
-        last = response.json()
-        new_proof = proof_of_work(last['proof'])
-
-        potential_block = {"id": user_id, "proof": new_proof}
-        response = post(url=node + "/mine", json=potential_block)
-        data = response.json()
-
-        if data['message'] == 'New Block Forged':
-            coins_mined += 1
-            print(f"Total coins mined: {coins_mined}")
-        else:
-            print(data['message'])
+    set_interval(update_freq, update_proof)
