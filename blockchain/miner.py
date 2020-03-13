@@ -1,13 +1,14 @@
-import hashlib
-import requests
+import random
 
-import sys
-
+from gc import disable
+from hashlib import sha256
+from requests import get, post
+from sys import argv
+from timeit import default_timer as timer
 from uuid import uuid4
 
-from timeit import default_timer as timer
 
-import random
+disable()
 
 
 def proof_of_work(last_proof):
@@ -27,10 +28,11 @@ def proof_of_work(last_proof):
     #  TODO: Your code here
 
     print(f"Proof found: {proof} in {timer() - start}")
+
     return proof
 
 
-def valid_proof(last_hash, proof):
+def valid_proof(last_proof: int, proof: int):
     """
     Validates the Proof:  Multi-ouroborus:  Do the last six characters of
     the hash of the last proof match the first six characters of the hash
@@ -38,9 +40,15 @@ def valid_proof(last_hash, proof):
 
     IE:  last_hash: ...AE9123456, new hash 123456E88...
     """
+    last_hash = hash_proof(last_proof)
+    current_hash = hash_proof(proof)
 
-    # TODO: Your code here!
-    pass
+    return last_hash[-6:] == current_hash[:6]
+
+
+def hash_proof(proof):
+    string = str(proof).encode("utf-8")
+    return str(sha256(string).hexdigest())
 
 
 def load_user():
@@ -57,8 +65,8 @@ def load_user():
 
 if __name__ == '__main__':
     # What node are we interacting with?
-    if len(sys.argv) > 1:
-        node = sys.argv[1]
+    if len(argv) > 1:
+        node = argv[1]
     else:
         node = "https://lambda-coin.herokuapp.com/api"
 
@@ -68,14 +76,14 @@ if __name__ == '__main__':
 
     while True:
         # Get the last proof from the server
-        r = requests.get(url=node + "/last_proof")
+        response = get(url=node + "/last_proof")
 
-        data = r.json()
-        new_proof = proof_of_work(data['proof'])
+        last = response.json()
+        new_proof = proof_of_work(last['proof'])
 
-        post_data = {"id": user_id, "proof": new_proof}
-        r = requests.post(url=node + "/mine", json=post_data)
-        data = r.json()
+        potential_block = {"id": user_id, "proof": new_proof}
+        response = post(url=node + "/mine", json=potential_block)
+        data = response.json()
 
         if data['message'] == 'New Block Forged':
             coins_mined += 1
