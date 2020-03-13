@@ -57,7 +57,7 @@ def mine(user_id: str):
     if valid_proof(last_hash, proof):
         post_proof(user_id, proof)
         update_proof()
-        interrupt = coins_mined >= 10
+        interrupt = coins_mined >= 100
 
 
 def valid_proof(last_hash: str, proof: int):
@@ -88,6 +88,7 @@ def post_proof(user_id: str, proof: int):
 
 def hash_proof(proof: int):
     string = str(proof).encode("utf-8")
+
     return str(sha256(string).hexdigest())
 
 
@@ -100,6 +101,7 @@ def load_user():
     if user_id == 'NONAME\n':
         print("ERROR: You must change your name in `my_id.txt`!")
         exit()
+
     return user_id
 
 
