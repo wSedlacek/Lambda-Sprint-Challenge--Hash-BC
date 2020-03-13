@@ -1,13 +1,10 @@
-
 from gc import disable
 from hashlib import sha256
 from requests import get, post
-from random import randint
 from sys import argv
 from threading import Timer
 from timeit import default_timer as timer
 from typing import Callable
-from uuid import uuid4
 
 
 disable()
@@ -29,7 +26,7 @@ def set_interval(interval: float, runner: Callable):
 
 
 def update_proof():
-    global counter, last_proof, last_hash
+    global counter, last_hash, last_proof
     response = get(url=node + "/last_proof")
     current = response.json()
 
@@ -50,7 +47,7 @@ def mine(user_id: str):
     - Use the same method to generate SHA-256 hashes as the examples in class
     """
 
-    global interrupt, last_hash, coins_mined, counter
+    global interrupt, counter, last_hash, coins_mined
 
     counter -= 1
     proof = counter
@@ -93,10 +90,10 @@ def hash_proof(proof: int):
 
 
 def load_user():
-    f = open("my_id.txt", "r")
-    user_id = f.read()
+    file = open("my_id.txt", "r")
+    user_id = file.read()
     print("ID is", user_id)
-    f.close()
+    file.close()
 
     if user_id == 'NONAME\n':
         print("ERROR: You must change your name in `my_id.txt`!")
@@ -106,13 +103,11 @@ def load_user():
 
 
 if __name__ == '__main__':
-    # What node are we interacting with?
     if len(argv) > 1:
         node = argv[1]
     else:
         node = "https://lambda-coin.herokuapp.com/api"
 
-    # Load or create ID
     user_id = load_user()
     update_freq = 0.01
 
