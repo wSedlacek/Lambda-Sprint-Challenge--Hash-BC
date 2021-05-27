@@ -1,16 +1,49 @@
-import hashlib
-import requests
-
-import sys
-
-from uuid import uuid4
-
+from gc import disable
+from hashlib import sha256
+from requests import get, post
+from sys import argv
+from threading import Timer
 from timeit import default_timer as timer
+from typing import Callable
 
-import random
+
+disable()
+
+interrupt: bool = False
+
+counter: int = 0
+last_hash: str = ""
+last_proof: int = None
+
+coins_mined: int = 0
+
+cache = {}
 
 
-def proof_of_work(last_proof):
+def set_interval(interval: float, runner: Callable):
+    global interrupt
+    if not interrupt:
+        runner()
+        Timer(interval, set_interval, args=[interval, runner]).start()
+
+
+def update_proof():
+    global counter, last_hash, last_proof, cache
+    response = get(url=node + "/last_proof")
+    current = response.json()
+
+    if last_proof != current['proof']:
+        last_proof = current['proof']
+        last_hash = hash_proof(last_proof)
+        print(f"Proof Change: {last_proof}")
+
+    if last_hash[-6:] in cache:
+        post_proof("wSedlacek", cache[last_hash[-6:]])
+        update_proof()
+        interrupt = coins_mined >= 100
+
+
+def mine(user_id: str):
     """
     Multi-Ouroboros of Work Algorithm
     - Find a number p' such that the last six digits of hash(p) are equal
@@ -20,61 +53,55 @@ def proof_of_work(last_proof):
     - Use the same method to generate SHA-256 hashes as the examples in class
     """
 
-    start = timer()
+    global interrupt, counter, last_hash, coins_mined
 
-    print("Searching for next proof")
-    proof = 0
-    #  TODO: Your code here
-
-    print("Proof found: " + str(proof) + " in " + str(timer() - start))
-    return proof
+    counter += 1
+    hash_proof(counter)
 
 
-def valid_proof(last_hash, proof):
-    """
-    Validates the Proof:  Multi-ouroborus:  Do the last six characters of
-    the hash of the last proof match the first six characters of the hash
-    of the new proof?
+def post_proof(user_id: str, proof: int):
+    global coins_mined
+    potential_block = {"id": user_id, "proof": proof}
+    response = post(url=node + "/mine", json=potential_block)
+    data = response.json()
 
-    IE:  last_hash: ...AE9123456, new hash 123456E88...
-    """
+    if data['message'] == 'New Block Forged':
+        coins_mined += 1
+        print(f"Total coins mined: {coins_mined}")
+    else:
+        print(data['message'])
 
-    # TODO: Your code here!
-    pass
+
+def hash_proof(proof: int):
+    global cache
+    string = str(proof).encode("utf-8")
+    hashed = str(sha256(string).hexdigest())
+    cache[hashed[:6]] = proof
+    return hashed
+
+
+def load_user():
+    file = open("my_id.txt", "r")
+    user_id = file.read()
+    print("ID is", user_id)
+    file.close()
+
+    if user_id == 'NONAME\n':
+        print("ERROR: You must change your name in `my_id.txt`!")
+        exit()
+
+    return user_id
 
 
 if __name__ == '__main__':
-    # What node are we interacting with?
-    if len(sys.argv) > 1:
-        node = sys.argv[1]
+    if len(argv) > 1:
+        node = argv[1]
     else:
         node = "https://lambda-coin.herokuapp.com/api"
 
-    coins_mined = 0
+    user_id = load_user()
+    update_freq = 0.01
 
-    # Load or create ID
-    f = open("my_id.txt", "r")
-    id = f.read()
-    print("ID is", id)
-    f.close()
-
-    if id == 'NONAME\n':
-        print("ERROR: You must change your name in `my_id.txt`!")
-        exit()
-    # Run forever until interrupted
-    while True:
-        # Get the last proof from the server
-        r = requests.get(url=node + "/last_proof")
-        data = r.json()
-        new_proof = proof_of_work(data.get('proof'))
-
-        post_data = {"proof": new_proof,
-                     "id": id}
-
-        r = requests.post(url=node + "/mine", json=post_data)
-        data = r.json()
-        if data.get('message') == 'New Block Forged':
-            coins_mined += 1
-            print("Total coins mined: " + str(coins_mined))
-        else:
-            print(data.get('message'))
+    set_interval(update_freq, update_proof)
+    while not interrupt:
+        mine(user_id)

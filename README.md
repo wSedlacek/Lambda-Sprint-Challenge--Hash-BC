@@ -18,17 +18,39 @@ Commit your code regularly and meaningfully. This helps both you (in case you ev
 
 ## Description
 
-This sprint challenge is divided up into three parts:  Hash tables coding, blockchain coding, and a short interview covering parts of hash tables and blockchain.
+This sprint challenge is divided up into three parts: Hash tables coding, blockchain coding, and a short interview covering parts of hash tables and blockchain.
 
 ## Interview Questions
 
 Explain in detail the workings of a dynamic array:
-* What is the runtime complexity to access an array, add or remove from the front, and add or remove from the back?
-* What is the worse case scenario if you try to extend the storage size of a dynamic array?
+
+- What is the runtime complexity to access an array, add or remove from the front, and add or remove from the back?
+
+  - Access: O(k)
+  - Add from back: O(k) if not full, O(n) if full (to copy to new array), increasing the amount resized each time we resize brings this down to effectively O(k) as by the time we are working with really large numbers resizing won't be occurring frequently
+  - Add to front: O(n), the array must be copied over to a new block of memory to add to the front
+
+- What is the worse case scenario if you try to extend the storage size of a dynamic array?
+  - O(n) meaning you have to copy the entire array over to a new block of memory
 
 Explain how a blockchain is structured. What are the blocks, what is the chain? How is the data organized?
- 
+
+```txt
+A block chain is a series blocks where each block contains a hash of the previous block and a proof of
+work that validate the block. Each block can contain any type of data, transactions, logs, anything real,
+ultimately what is important is how each block preferences the previous one and how each block is validate
+```
+
 Explain how proof of work functions. How does it operate. How does this protect the chain from attack. What kind of attack is possible?
+
+```txt
+Proof of work is some rule, typically relating around the hash that makes validating a block easy but
+finding a valid block difficult. In addition chains that have the most work put into them are considered to
+be the true chain. Fake blocks can be created with valid proofs of work however in order to do so an attacker
+would need not only find a valid proof for his fake block but also all blocks that come after it and do so to
+become a longer chain then what everyone in the entire world is working on. Basically they would need more
+compute power then everyone else who uses the block chain which in large communities is next to impossible.
+```
 
 ## Project Set Up
 
@@ -38,13 +60,13 @@ For the hash tables portion of the sprint challenge, you'll be working through t
 
 A hash table implementation has been included for you already. Your task is to get the tests passing (using a hash table to do it). You can remind yourself of what hash table functions are available by looking at the hashtable.py file that is included in each exercise directory (note that the hash table implementations for both exercises differ slightly).
 
-*You may not use any advanced, built-in Python functions to solve these problems.*
+_You may not use any advanced, built-in Python functions to solve these problems._
 
 #### [Blockchain]
 
 For the blockchain portion of the challenge, you will be writing code for a new miner that will solve a different Proof of Work algorithm than the one we have been working with.
 
-Your goal is to mine at least one coin.  Keep in mind that with many people competing over the same coins, this may take a long time.  By our math, we expect that an average solution should be the first to find a solution at least once in an hour or two of mining.  
+Your goal is to mine at least one coin. Keep in mind that with many people competing over the same coins, this may take a long time. By our math, we expect that an average solution should be the first to find a solution at least once in an hour or two of mining.
 
 ## Minimum Viable Product
 
@@ -52,13 +74,12 @@ Your goal is to mine at least one coin.  Keep in mind that with many people comp
 
 #### [Blockchain](https://github.com/LambdaSchool/Sprint-Challenge--Hash-BC/tree/master/blockchain)
 
-
 ### Rubric
 
-| *OBJECTIVE*                                                                                                     | *TASK*             | *1 - DOES NOT MEET EXPECTATIONS*                                                                                            | *2 - MEETS EXPECTATIONS*                                                                                                       | *3 - EXCEEDS EXPECTATIONS                                                                                                                             |
-|-----------------------------------------------------------------------------------------------------------------|--------------------|-----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| implement and describe how high-level array functions work down to the memory level                             | Interview Question | The student fully explains two or fewer of the bulleted items in the solution repo\. | The student fully explains at least 3 of the items in the bulleted list\.                                | The student fully explains 4 or more items from the bulleted list\.           |
-| implement and utilize basic hash table + handle collisions and resizing in a hash table                         | Hash Problem 1 & 2 | Tests do not pass on one or both problems, or solutions do not use hash tables.                                             | Tests pass on both problems.  Solution utilizes a hash table.                                                                  | Tests pass on on both problems with solutions utilizing hash tables, linear runtime complexity, no flake8 complaints.                                 |
-| diagram and code a simple blockchain, utilizing a cryptographic hash                                            | Interview Question | The student fully explains two or fewer of the bulleted items in the solution repo\. | The student fully explains at least 3 of the items in the bulleted list\.                                | The student fully explains 4 or more items from the bulleted list\.           |
-| utilize a Proof of Work process to protect a blockchain from attack                                             | Blockchain Problem | The student is unable to mine a coin before the end of lunch.                                                               | The student was able to mine a coin before the end of lunch.                                                                   | The student presented a unique solution that was able to mine more than 100 coins before the end of lunch.                                            |
-| build a protocol to allow nodes in a blockchain network to communicate to share blocks and determine consensus. | Interview Question | The student fully explains two or fewer of the bulleted items in the solution repo\. | The student fully explains at least 3 of the items in the bulleted list\.                                | The student fully explains 4 or more items from the bulleted list\.           |
+| _OBJECTIVE_                                                                                                     | _TASK_             | _1 - DOES NOT MEET EXPECTATIONS_                                                     | _2 - MEETS EXPECTATIONS_                                                  | \*3 - EXCEEDS EXPECTATIONS                                                                                            |
+| --------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| implement and describe how high-level array functions work down to the memory level                             | Interview Question | The student fully explains two or fewer of the bulleted items in the solution repo\. | The student fully explains at least 3 of the items in the bulleted list\. | The student fully explains 4 or more items from the bulleted list\.                                                   |
+| implement and utilize basic hash table + handle collisions and resizing in a hash table                         | Hash Problem 1 & 2 | Tests do not pass on one or both problems, or solutions do not use hash tables.      | Tests pass on both problems. Solution utilizes a hash table.              | Tests pass on on both problems with solutions utilizing hash tables, linear runtime complexity, no flake8 complaints. |
+| diagram and code a simple blockchain, utilizing a cryptographic hash                                            | Interview Question | The student fully explains two or fewer of the bulleted items in the solution repo\. | The student fully explains at least 3 of the items in the bulleted list\. | The student fully explains 4 or more items from the bulleted list\.                                                   |
+| utilize a Proof of Work process to protect a blockchain from attack                                             | Blockchain Problem | The student is unable to mine a coin before the end of lunch.                        | The student was able to mine a coin before the end of lunch.              | The student presented a unique solution that was able to mine more than 100 coins before the end of lunch.            |
+| build a protocol to allow nodes in a blockchain network to communicate to share blocks and determine consensus. | Interview Question | The student fully explains two or fewer of the bulleted items in the solution repo\. | The student fully explains at least 3 of the items in the bulleted list\. | The student fully explains 4 or more items from the bulleted list\.                                                   |
